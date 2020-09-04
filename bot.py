@@ -24,18 +24,30 @@ async def on_message(message):
         await message.delete()
     await bot.process_commands(message)
 
+
+def active_voice(ctx):
+    voice = ctx.message.author.voice
+    if (voice.channel != None and  ctx.message.guild.voice_client.channel == voice.channel
+        and not voice.self_deaf and not voice.deaf):
+            return True
+    
+    return ctx.author == ctx.guild.owner
+
+
 class Song:
-    def __init__(self,url,stream_url,title,duration):
+    def __init__(self,url,stream_url,title,duration,requestor):
         self.url = url
         self.stream_url = stream_url
         self.title = title
         self.duration = duration        
+        self.requestor = requestor
 
 class Music(commands.Cog):
     def __init__(self,bot):
         self.bot = bot
         self.voice = None
-        
+        self.currentsong = None
+
     @commands.command()
     async def poem(self,ctx):  #TODO: add poems
         await ctx.channel.send('''*clears throat*
@@ -61,71 +73,82 @@ class Music(commands.Cog):
                 await ctx.channel.send('**Meh raazi, lekin Tu nahi raazi. `Please connect to a VC first.`**')
 
     def playsong(self,ctx):
+        '''Master play function'''
         if len(self.playlist) > 0:
             self.currentsong = self.playlist.pop(0)
             
             before_options = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"    
-            self.voice.play(discord.FFmpegPCMAudio(self.currentsong.stream_url,before_options=before_options),after =lambda e: self.playsong(ctx))
-            
+            self.voice.play(
+                            discord.FFmpegPCMAudio(self.currentsong.stream_url,before_options=before_options),
+                            after =lambda e: self.playsong(ctx)
+                            )            
             asyncio.run_coroutine_threadsafe(ctx.channel.send(f"\U0001f4c0`Aapko Sunaana Chaahta Hoon:`\U0001f4c0\n{self.currentsong.url}"),self.bot.loop)
     
+    
     @commands.command()
+    @commands.check(active_voice)
     async def play(self,ctx,*args): #TODO: check if user is connected to VC
         
-        self.searchquery = ' '.join(args)
+        searchquery = ' '.join(args)
 
-        YTresults = YoutubeSearch(self.searchquery, max_results=1).to_dict()
+        YTresults = YoutubeSearch(searchquery, max_results=1).to_dict()
         for result in YTresults:
             url_ = 'https://www.youtube.com'+ result['url_suffix']
+            title = result.get('title')
+            duration = result.get('duration')
         
         ydl_opts = {}
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            result = ydl.extract_info(url_,download=False )
+            result = ydl.extract_info(url_,download=False)
             stream_url = result['formats'][0]['url']
-            title = result['title'] 
-            duration = result['duration']
-            duration = f"{duration//60}:{duration%60}"
-        
+
         if self.voice.is_playing():
             await ctx.channel.send(f'`{title}` has been added to queue')
-            songObj = Song(url_,stream_url,title,duration) 
+            songObj = Song(url_,stream_url,title,duration, ctx.message.author) 
             self.playlist.append(songObj)
             return
         else:
-            songObj = Song(url_,stream_url,title,duration) # repeating is faster
+            songObj = Song(url_,stream_url,title,duration, ctx.message.author) # repeating is faster
             self.playlist.append(songObj)
             self.playsong(ctx)
             
     
-
+    
     @commands.command(name = 'pause',aliases = ['rokku'])
+    @commands.check(active_voice)
     async def pause_(self,ctx): #TODO: checking
+        '''Pauses the current playing song'''
         self.voice.pause()
         await ctx.channel.send("*Me karu intezer tera...* `Song has been paused` \u23f8")
 
 
     @commands.command(name = 'resume')
+    @commands.check(active_voice)
     async def resume_(self,ctx):
+        '''Resumes the paused song'''
         await ctx.channel.send("*RESUMING bhai...*\u23ef")
         self.voice.resume()
 
-    @commands.command()
+    @commands.command(aliases = ['s','hutt'])
+    @commands.check(active_voice)
     async def skip(self,ctx):
-        if self.playlist or self.voice.is_playing():
+        if self.voice.is_playing():
             await ctx.channel.send("**`song skipped`** \U0001fa93")
         else:
-            await ctx.channel.send("No songs to skip")
+            await ctx.channel.send("No songs to skip\U0001f926")
         self.voice.stop()
 
     @commands.command(aliases = ['r'])
+    @commands.check(active_voice)
     async def remove (self,ctx,position : int):
         if self.playlist:
             if position < 0:
                 s =self.playlist.pop(position)
             else:
                 s = self.playlist.pop(position-1)
-            await ctx.channel.send(f"removed `{s.title}` from the queue") #TODO: emoji
+            await ctx.channel.send(f"**removed `{s.title}` from the queue**") #TODO: emoji
             del s
+    
     
     @commands.command(aliases = ['m'])
     async def move(self,ctx,initial:int,final : int = 1):
@@ -134,13 +157,14 @@ class Music(commands.Cog):
             return
         s =self.playlist.pop(initial-1)
         self.playlist.insert(final-1,s)
-        await ctx.channel.send(f"`{s.title}` moved to position {final}")
+        await ctx.channel.send(f"**`{s.title}` moved to position {final}** \u2705")
         del s
 
     @commands.command(name = 'clear')
+    @commands.check(active_voice)
     async def clear_(self,ctx):
         self.playlist.clear()
-        await ctx.channel.send("`Queue has been cleared`")
+        await ctx.channel.send("`Queue has been cleared`\u2705")
 
     @commands.command(name = 'queue',aliases = ['q','gaanas'])
     async def listqueue(self,ctx):
@@ -150,8 +174,8 @@ class Music(commands.Cog):
         # embed.description = 'Now Playing: (some song)'
 
 
-
-    @commands.command(help = f"Disconnects from Voice Channel", aliases = ['d'])
+    @commands.command(help = f"Disconnects from Voice Channel", aliases = ['dis'])
+    @commands.check(active_voice)
     async def disconnect(self,ctx):
         await self.voice.disconnect()
         await ctx.channel.send('**Tumhari mansik isthithi aaj thodi gadbad lag rahi hai ... hum baad mein phir aayenge**\n`Disconnected from VC`')
