@@ -42,7 +42,9 @@ class Song:
         self.duration = duration        
         self.requestor = requestor
 
+
 class Music(commands.Cog):
+
     def __init__(self,bot):
         self.bot = bot
         self.voice = None
@@ -58,6 +60,7 @@ class Music(commands.Cog):
         then jail bail, jail bail, jail bail ... 
         and one day your heart fail''')
 
+
     @commands.command(aliases = ['j','aaja'])
     async def join(self,ctx):
         self.playlist = []
@@ -71,6 +74,7 @@ class Music(commands.Cog):
                 await ctx.channel.send('**Arree BC, I\'m already connected to a VC**')
             else:
                 await ctx.channel.send('**Meh raazi, lekin Tu nahi raazi. `Please connect to a VC first.`**')
+
 
     def playsong(self,ctx):
         '''Master play function'''
@@ -87,7 +91,7 @@ class Music(commands.Cog):
     
     @commands.command()
     @commands.check(active_voice)
-    async def play(self,ctx,*args): #TODO: check if user is connected to VC
+    async def play(self,ctx,*args):
         
         searchquery = ' '.join(args)
 
@@ -116,7 +120,7 @@ class Music(commands.Cog):
     
     @commands.command(name = 'pause',aliases = ['rokku'])
     @commands.check(active_voice)
-    async def pause_(self,ctx): #TODO: checking
+    async def pause_(self,ctx):
         '''Pauses the current playing song'''
         self.voice.pause()
         await ctx.channel.send("*Me karu intezer tera...* `Song has been paused` \u23f8")
@@ -129,6 +133,7 @@ class Music(commands.Cog):
         await ctx.channel.send("*RESUMING bhai...*\u23ef")
         self.voice.resume()
 
+
     @commands.command(aliases = ['s','hutt'])
     @commands.check(active_voice)
     async def skip(self,ctx):
@@ -138,9 +143,11 @@ class Music(commands.Cog):
             await ctx.channel.send("No songs to skip\U0001f926")
         self.voice.stop()
 
+
     @commands.command(aliases = ['r'])
     @commands.check(active_voice)
     async def remove (self,ctx,position : int):
+        '''Removes song at position from queue'''
         if self.playlist:
             if position < 0:
                 s =self.playlist.pop(position)
@@ -152,6 +159,8 @@ class Music(commands.Cog):
     
     @commands.command(aliases = ['m'])
     async def move(self,ctx,initial:int,final : int = 1):
+        '''Moves position of song from the specified intial position to final position'''
+
         if initial < 1 or final < 1:
             await ctx.channel.send("`Invalid Arguments, naughty boy`")
             return
@@ -160,18 +169,27 @@ class Music(commands.Cog):
         await ctx.channel.send(f"**`{s.title}` moved to position {final}** \u2705")
         del s
 
+
     @commands.command(name = 'clear')
     @commands.check(active_voice)
     async def clear_(self,ctx):
         self.playlist.clear()
         await ctx.channel.send("`Queue has been cleared`\u2705")
 
+
     @commands.command(name = 'queue',aliases = ['q','gaanas'])
     async def listqueue(self,ctx):
-        plals = str(self.playlist)
-        await ctx.channel.send(plals)
-        # embed = discord.Embed(title = 'Yeh hei tera queue:')
-        # embed.description = 'Now Playing: (some song)'
+        '''List the songs in queue'''
+
+        if self.playlist:
+            embed = discord.Embed(title = 'Yeh hei tera queue:',colour = discord.Colour.gold())
+            embed.description = f'Now Playing: {self.currentsong.title}\n\n'
+            for song in self.playlist:
+                embed.add_field(name = song.title,value = f'Requested by: {song.requestor}\nDuration: {song.duration}', inline = False)
+        else:
+            embed = discord.Embed(title = 'Abbe...',description = "Queue is empty",colour = discord.Colour.red())
+
+        await ctx.channel.send(embed = embed)
 
 
     @commands.command(help = f"Disconnects from Voice Channel", aliases = ['dis'])
@@ -187,7 +205,6 @@ async def shutdown(ctx):
     await ctx.channel.send("Understandable. Have a nice day ✌")
     await ctx.bot.logout()
     print(f"Bot has been shutdown by the command by {ctx.message.author.name}")
-
 
 @bot.command(name = 'purge')
 @commands.is_owner() 
