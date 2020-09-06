@@ -35,12 +35,13 @@ def active_voice(ctx):
 
 
 class Song:
-    def __init__(self,url,stream_url,title,duration,requestor):
+    def __init__(self,url,stream_url,title,duration,thumbnail,requestor):
         self.url = url
         self.stream_url = stream_url
         self.title = title
         self.duration = duration        
         self.requestor = requestor
+        self.thumbnail = thumbnail
 
 
 class Music(commands.Cog):
@@ -100,6 +101,7 @@ class Music(commands.Cog):
             url_ = 'https://www.youtube.com'+ result['url_suffix']
             title = result.get('title')
             duration = result.get('duration')
+            thumbnail = result.get('thumbnails')[0]
         
         ydl_opts = {}
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
@@ -108,11 +110,11 @@ class Music(commands.Cog):
 
         if self.voice.is_playing():
             await ctx.channel.send(f'`{title}` has been added to queue')
-            songObj = Song(url_,stream_url,title,duration, ctx.message.author) 
+            songObj = Song(url_,stream_url,title,duration,thumbnail, ctx.message.author) 
             self.playlist.append(songObj)
             return
         else:
-            songObj = Song(url_,stream_url,title,duration, ctx.message.author) # repeating is faster
+            songObj = Song(url_,stream_url,title,duration,thumbnail, ctx.message.author) # repeating is faster
             self.playlist.append(songObj)
             self.playsong(ctx)
             
@@ -186,8 +188,24 @@ class Music(commands.Cog):
             embed.description = f'Now Playing: {self.currentsong.title}\n\n'
             for song in self.playlist:
                 embed.add_field(name = song.title,value = f'Requested by: {song.requestor}\nDuration: {song.duration}', inline = False)
+       
         else:
             embed = discord.Embed(title = 'Abbe...',description = "Queue is empty",colour = discord.Colour.red())
+
+        await ctx.channel.send(embed = embed)
+
+
+    @commands.command(aliases = ['np'])
+    async def nowplaying(self,ctx): #TODO: Duration left
+
+        if self.voice.is_playing() or self.voice.is_paused():
+            embed = discord.Embed(title = 'Now playing:',colour = discord.Colour.blurple())
+            embed.add_field(name = f'{self.currentsong.title}',
+                            value = f"Requested by: {self.currentsong.requestor}\nDuration: {self.currentsong.duration}")
+            embed.set_thumbnail(url = self.currentsong.thumbnail)
+
+        else:
+            embed = discord.Embed(title = 'Hmmm...',description = 'Currently not playing a song',colour = discord.Colour.red())
 
         await ctx.channel.send(embed = embed)
 
