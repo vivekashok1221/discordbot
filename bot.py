@@ -43,13 +43,14 @@ class Song:
         self.requestor = requestor
         self.thumbnail = thumbnail
 
-
+#TODO: Custom help command
 class Music(commands.Cog):
 
     def __init__(self,bot):
         self.bot = bot
         self.voice = None
         self.currentsong = None
+        self.repeatsong = False
 
     @commands.command()
     async def poem(self,ctx):  #TODO: add poems
@@ -76,18 +77,23 @@ class Music(commands.Cog):
             else:
                 await ctx.channel.send('**Meh raazi, lekin Tu nahi raazi. `Please connect to a VC first.`**')
 
-
+    
     def playsong(self,ctx):
         '''Master play function'''
-        if len(self.playlist) > 0:
+
+        if self.repeatsong:
+            self.repeatsong = False  
+        elif len(self.playlist) > 0:
             self.currentsong = self.playlist.pop(0)
+        else:
+            return #no songs in queue and repeat is off
             
-            before_options = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"    
-            self.voice.play(
-                            discord.FFmpegPCMAudio(self.currentsong.stream_url,before_options=before_options),
-                            after =lambda e: self.playsong(ctx)
-                            )            
-            asyncio.run_coroutine_threadsafe(ctx.channel.send(f"\U0001f4c0`Aapko Sunaana Chaahta Hoon:`\U0001f4c0\n{self.currentsong.url}"),self.bot.loop)
+        before_options = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"    
+        self.voice.play(
+                        discord.FFmpegPCMAudio(self.currentsong.stream_url,before_options=before_options),
+                        after =lambda e: self.playsong(ctx)
+                        )            
+        asyncio.run_coroutine_threadsafe(ctx.channel.send(f"\U0001f4c0`Aapko Sunaana Chaahta Hoon:`\U0001f4c0\n{self.currentsong.url}"),self.bot.loop)
     
     
     @commands.command()
@@ -144,6 +150,19 @@ class Music(commands.Cog):
         else:
             await ctx.channel.send("No songs to skip\U0001f926")
         self.voice.stop()
+        self.repeatsong = False
+
+
+    @commands.command()
+    @commands.check(active_voice)
+    async def repeat(self,ctx):
+        '''Repeats the current playing song ONCE'''
+        if not self.repeatsong:
+            self.repeatsong = True
+            await ctx.channel.send("**`Repeat: ON`** \U0001f502")
+        else:
+            self.repeatsong = False
+            await ctx.channel.send("**`Repeat: Cancelled`**\U0001f645")
 
 
     @commands.command(aliases = ['r'])
@@ -202,8 +221,9 @@ class Music(commands.Cog):
             embed = discord.Embed(title = 'Now playing:',colour = discord.Colour.blurple())
             embed.add_field(name = f'{self.currentsong.title}',
                             value = f"Requested by: {self.currentsong.requestor}\nDuration: {self.currentsong.duration}")
+            
             embed.set_thumbnail(url = self.currentsong.thumbnail)
-
+        
         else:
             embed = discord.Embed(title = 'Hmmm...',description = 'Currently not playing a song',colour = discord.Colour.red())
 
