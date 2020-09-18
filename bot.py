@@ -79,5 +79,5 @@ async def reload(ctx, cog_name: str):
 
 bot.load_extension('cogs.music')
 bot.load_extension('cogs.admin')
-
+discord.opus.load_opus(name="opus")
 bot.run(TOKEN)
