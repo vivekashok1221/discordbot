@@ -2,3 +2,4 @@
 .vscode/settings.json
 cogs/__pycache__/__init__.cpython-38.pyc
 cogs/__pycache__/music.cpython-38.pyc
+cogs/__pycache__/admin.cpython-38.pyc
