@@ -7,9 +7,12 @@ from youtube_search import YoutubeSearch
 
 
 def active_voice(ctx):
-    voice = ctx.message.author.voice
-    if (voice.channel is not None and ctx.message.guild.voice_client.channel == voice.channel
-            and not voice.self_deaf and not voice.deaf):
+    bot_voice = ctx.guild.voice_client
+    if bot_voice is None:
+        return False
+    author_voice = ctx.message.author.voice
+    if (author_voice is not None and bot_voice.channel == author_voice.channel
+            and not author_voice.self_deaf and not author_voice.deaf):
         return True
 
     return ctx.author == ctx.guild.owner
@@ -34,6 +37,33 @@ class Music(commands.Cog):
         self.currentsong = None
         self.repeatsong = False
 
+
+    async def cog_command_error(self, ctx, error):
+
+        if isinstance(error, commands.CheckFailure):
+
+            bot_voice = ctx.message.guild.voice_client
+            author_voice = ctx.message.author.voice
+
+            if bot_voice is None or author_voice is None\
+                    or bot_voice.channel != author_voice.channel:
+                await ctx.channel.send(
+                                    "**`Please connect to the same VC as "
+                                    f"`{self.bot.user.mention}`to use this "
+                                    "command`\U0001f926\u200d\u2642\ufe0f**"
+                                        )
+            elif author_voice.self_deaf:
+                await ctx.channel.send(
+                                    "**`Nuh uh, can't use this command "
+                                    "while deafened.`**")
+
+            elif author_voice.deaf:
+                await ctx.channel.send(
+                    f"{ctx.author.mention}**`Server deafen "
+                    "go Brrrrrrrrrr...`**"
+                                    )
+
+
     @commands.command()
     async def poem(self, ctx):  # TODO: add poems
         await ctx.channel.send('''*clears throat*
@@ -49,15 +79,24 @@ class Music(commands.Cog):
     async def join(self, ctx):
         self.playlist = []
         # playlist = asyncio.Queue()
-        try:
-            await ctx.message.author.voice.channel.connect()
-            await ctx.channel.send('**Meh raazi! Tu raazi! `Connected to your VC`**')
-            self.voice = ctx.message.guild.voice_client
-        except:
-            if self.voice:
-                await ctx.channel.send('**Arree BC, I\'m already connected to a VC**')
+        author_voice = ctx.message.author.voice
+        self.voice = ctx.message.guild.voice_client
+
+
+        if self.voice is None:
+            if author_voice:
+                await ctx.message.author.voice.channel.connect()
+                await ctx.channel.send(
+                    '**Meh raazi! Tu raazi! `Connected to your VC`**')
+                self.voice = ctx.message.guild.voice_client
             else:
-                await ctx.channel.send('**Meh raazi, lekin Tu nahi raazi. `Please connect to a VC first.`**')
+                await ctx.channel.send(
+                                "**Meh raazi, lekin Tu nahi raazi. "
+                                " `Please connect to a VC first.`**")
+        else:
+            await ctx.channel.send(
+                '**Arree BC, I\'m already connected to a VC**'
+                                )
 
 
     def playsong(self, ctx):
@@ -75,13 +114,18 @@ class Music(commands.Cog):
                         before_options=before_options),
                         after=lambda e: self.playsong(ctx)
                         )
-        asyncio.run_coroutine_threadsafe(ctx.channel.send(f"\U0001f4c0`Aapko Sunaana Chaahta Hoon:`\U0001f4c0\n{self.currentsong.url}")
-                                            , self.bot.loop)
+        asyncio.run_coroutine_threadsafe(ctx.channel.send(
+            f"\U0001f4c0`Aapko Sunaana Chaahta Hoon:`"
+            "\U0001f4c0\n{self.currentsong.url}"),
+                self.bot.loop)
 
 
     @commands.command()
     @commands.check(active_voice)
     async def play(self, ctx, *args):
+        if len(args) == 0:
+            await self.resume_(ctx)
+            return
 
         searchquery = ' '.join(args)
 
@@ -92,10 +136,13 @@ class Music(commands.Cog):
             duration = result.get('duration')
             thumbnail = result.get('thumbnails')[0]
 
-        ydl_opts = {}
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            result = ydl.extract_info(url_, download=False)
-            stream_url = result['formats'][0]['url']
+        try:
+            ydl_opts = {'quiet': True}
+            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                result = ydl.extract_info(url_, download=False)
+                stream_url = result['formats'][0]['url']
+        except Exception as e:
+            await ctx.channel.send(f'**`{type(e).__name__} : {e}`** \U0001f62c')
 
         if self.voice.is_playing():
             await ctx.channel.send(f'`{title}` has been added to queue')
@@ -112,46 +159,50 @@ class Music(commands.Cog):
     @commands.check(active_voice)
     async def pause_(self, ctx):
         '''Pauses the current playing song'''
-        self.voice.pause()
-        await ctx.channel.send("*Me karu intezer tera...* `Song has been paused` \u23f8")
+        if self.voice:
+            self.voice.pause()
+            await ctx.channel.send("*Me karu intezer tera...* `Song has been paused` \u23f8")
 
 
     @commands.command(name='resume')
     @commands.check(active_voice)
     async def resume_(self, ctx):
         '''Resumes the paused song'''
-        await ctx.channel.send("*RESUMING bhai...*\u23ef")
-        self.voice.resume()
+        if self.voice and self.voice.is_paused():
+            await ctx.channel.send("*RESUMING bhai...*\u23ef")
+            self.voice.resume()
 
 
     @commands.command(aliases=['s', 'hutt'])
     @commands.check(active_voice)
     async def skip(self, ctx):  # TODO: vote
-        if self.voice.is_playing():
-            await ctx.channel.send("**`song skipped`** \U0001fa93")
-        else:
-            await ctx.channel.send("No songs to skip\U0001f926")
-        self.voice.stop()
-        self.repeatsong = False
+        if self.voice:
+            if self.voice.is_playing():
+                await ctx.channel.send("**`song skipped`** \U0001fa93")
+            else:
+                await ctx.channel.send("No songs to skip\U0001f926")
+            self.voice.stop()
+            self.repeatsong = False
 
 
     @commands.command()
     @commands.check(active_voice)
     async def repeat(self, ctx):
         '''Repeats the current playing song ONCE'''
-        if not self.repeatsong:
-            self.repeatsong = True
-            await ctx.channel.send("**`Repeat: ON`** \U0001f502")
-        else:
-            self.repeatsong = False
-            await ctx.channel.send("**`Repeat: Cancelled`**\U0001f645")
+        if self.voice:
+            if not self.repeatsong:
+                self.repeatsong = True
+                await ctx.channel.send("**`Repeat: ON`** \U0001f502")
+            else:
+                self.repeatsong = False
+                await ctx.channel.send("**`Repeat: Cancelled`**\U0001f645")
 
 
     @commands.command(aliases=['r'])
     @commands.check(active_voice)
     async def remove(self, ctx, position: int):
         '''Removes song at position from queue'''
-        if self.playlist:
+        if self.voice and self.playlist:
             if position < 0:
                 s = self.playlist.pop(position)
             else:
@@ -163,61 +214,71 @@ class Music(commands.Cog):
     @commands.command(aliases=['m'])
     async def move(self, ctx, initial: int, final: int = 1):
         '''Moves song from the specified intial position to final position'''
-
-        if initial < 1 or final < 1:
-            await ctx.channel.send("`Invalid Arguments, naughty boy`")
-            return
-        s = self.playlist.pop(initial-1)
-        self.playlist.insert(final-1, s)
-        await ctx.channel.send(f"**`{s.title}` moved to position {final}** \u2705")
-        del s
+        if self.voice and self.playlist:
+            if initial < 1 or final < 1:
+                await ctx.channel.send("`Invalid Arguments, naughty boy`")
+                return
+            s = self.playlist.pop(initial-1)
+            self.playlist.insert(final-1, s)
+            await ctx.channel.send(f"**`{s.title}` moved to position {final}** \u2705")
+            del s
 
 
     @commands.command(name='clear')
     @commands.check(active_voice)
     async def clear_(self, ctx):
-        self.playlist.clear()
-        await ctx.channel.send("`Queue has been cleared`\u2705")
+        if self.voice:
+            self.playlist.clear()
+            await ctx.channel.send("`Queue has been cleared`\u2705")
 
 
     @commands.command(name='queue', aliases=['q', 'gaanas'])
     async def listqueue(self, ctx):
         '''List the songs in queue'''
 
-        if self.playlist:
-            embed = discord.Embed(title='Yeh hei tera queue:', colour=discord.Colour.gold())
-            embed.description = f'Now Playing: {self.currentsong.title}\n\n'
-            for song in self.playlist:
-                embed.add_field(name=song.title, value=f'Requested by: {song.requestor}\nDuration: {song.duration}', inline=False)
+        if self.voice:
+            if self.playlist:
+                embed = discord.Embed(
+                    title='Yeh hei tera queue:',
+                    colour=discord.Colour.gold())
+                embed.description = f'Now Playing: {self.currentsong.title}'
+                for song in self.playlist:
+                    embed.add_field(
+                        name=song.title,
+                        value=f"Requested by: {song.requestor}\n"
+                        "Duration: {song.duration}",
+                        inline=False)
 
-        else:
-            embed = discord.Embed(title='Abbe...', description="Queue is empty", colour=discord.Colour.red())
+            else:
+                embed = discord.Embed(title='Abbe...', description="Queue is empty", colour=discord.Colour.red())
 
-        await ctx.channel.send(embed=embed)
+            await ctx.channel.send(embed=embed)
 
 
     @commands.command(aliases=['np'])
     async def nowplaying(self, ctx):  # TODO: Duration left
 
-        if self.voice.is_playing() or self.voice.is_paused():
-            embed = discord.Embed(title='Now playing:', colour=discord.Colour.blurple())
-            embed.add_field(name=f'{self.currentsong.title}',
-                            value=f"Requested by: {self.currentsong.requestor}\nDuration: {self.currentsong.duration}")
+        if self.voice:
+            if self.voice.is_playing() or self.voice.is_paused():
+                embed = discord.Embed(title='Now playing:', colour=discord.Colour.blurple())
+                embed.add_field(name=f'{self.currentsong.title}',
+                                value=f"Requested by: {self.currentsong.requestor}\nDuration: {self.currentsong.duration}")
 
-            embed.set_thumbnail(url=self.currentsong.thumbnail)
+                embed.set_thumbnail(url=self.currentsong.thumbnail)
 
-        else:
-            embed = discord.Embed(title='Hmmm...', description='Currently not playing a song', colour=discord.Colour.red())
+            else:
+                embed = discord.Embed(title='Hmmm...', description='Currently not playing a song', colour=discord.Colour.red())
 
-        await ctx.channel.send(embed=embed)
+            await ctx.channel.send(embed=embed)
 
 
     @commands.command(help=f"Disconnects from Voice Channel", aliases=['dis'])
     @commands.check(active_voice)
     async def disconnect(self, ctx):
-        await self.voice.disconnect()
-        await ctx.channel.send('**Tumhari mansik isthithi aaj thodi gadbad lag rahi hai ... hum baad mein phir aayenge**\n`Disconnected from VC`')
-        self.playlist.clear()
+        if self.voice:
+            await self.voice.disconnect()
+            await ctx.channel.send("`Disconnected from VC`")
+            del self.playlist
 
 
 def setup(bot):
