@@ -9,7 +9,6 @@ class Admin(commands.Cog):
 
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
-            print(f"{ctx.command.name}\n\n")
             if ctx.command.name == "shutdown":
                 await ctx.channel.send(
                     "You do not have the required permissions "
@@ -62,7 +61,7 @@ class Admin(commands.Cog):
         await ctx.channel.send(
                             f"{member.mention} has been **kicked** "
                             "<a:cat_vibing:753973817608634468>\n**"
-                            "`reason:` **{reason}")
+                            f"`reason:` **{reason}")
         await member.send(embed=embed)
         await member.kick(reason=reason)
 

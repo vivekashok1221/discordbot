@@ -18,6 +18,7 @@ async def on_ready():
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
+        print("hmmmm")
         return
     elif isinstance(error, commands.MissingRequiredArgument):
         await ctx.channel.send("You are missing some arguments...")
@@ -31,7 +32,7 @@ async def on_command_error(ctx, error):
     bot_channel = discord.utils.get(ctx.guild.channels, name="bot-updates")
     embed = discord.Embed(
                         title="Uh-oh...",
-                        description=f"{type(error).__name__} : {error}`",
+                        description=f"{type(error).__name__} : {error}",
                         colour=discord.Colour.red()
                         )
     await bot_channel.send(f"{ctx.author.mention}", embed=embed)
@@ -42,7 +43,7 @@ async def ping(ctx):
     await ctx.send(f"`ping:{round(bot.latency,2)}`")
 
 
-@commands.command()
+@bot.command()
 @commands.is_owner()
 async def load(ctx, cog_name: str):
     try:
@@ -53,7 +54,7 @@ async def load(ctx, cog_name: str):
         await ctx.channel.send(f"**Successfully loaded**: `{cog_name}`")
 
 
-@commands.command()
+@bot.command()
 @commands.is_owner()
 async def unload(ctx, cog_name: str):
     try:
@@ -64,7 +65,7 @@ async def unload(ctx, cog_name: str):
         await ctx.channel.send(f"**Successfully unloaded**: `{cog_name}`")
 
 
-@commands.command()
+@bot.command()
 @commands.is_owner()
 async def reload(ctx, cog_name: str):
     try:

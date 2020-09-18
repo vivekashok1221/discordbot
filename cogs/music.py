@@ -115,8 +115,8 @@ class Music(commands.Cog):
                         after=lambda e: self.playsong(ctx)
                         )
         asyncio.run_coroutine_threadsafe(ctx.channel.send(
-            f"\U0001f4c0`Aapko Sunaana Chaahta Hoon:`"
-            "\U0001f4c0\n{self.currentsong.url}"),
+            "\U0001f4c0`Aapko Sunaana Chaahta Hoon:`"
+            f"\U0001f4c0\n{self.currentsong.url}"),
                 self.bot.loop)
 
 
@@ -246,7 +246,7 @@ class Music(commands.Cog):
                     embed.add_field(
                         name=song.title,
                         value=f"Requested by: {song.requestor}\n"
-                        "Duration: {song.duration}",
+                        f"Duration: {song.duration}",
                         inline=False)
 
             else:
