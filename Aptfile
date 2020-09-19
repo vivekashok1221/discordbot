@@ -6,3 +6,4 @@ libopus-dev -y
 libffi-dev -y
 libsodium-dev -y
 opus-tools
+libvpx.so.5
