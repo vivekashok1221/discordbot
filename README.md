@@ -18,9 +18,27 @@ daily! If you're wondering  my name is modelled after the character of the same 
 For installation of libraries and for further information click on the Dependancy Tag which will redirect you to the respective Python Documentation
 
 # Humpty Sharma Features and Commands
-## Admin Commands
+## Admin Commands:
 - ```mute/unmute```
 - ```kick```
 - ```shutdown```
 - ```purge```
 
+## Music Commands:
+- ```join```
+- ```play```
+- ```pause```
+- ```resume```
+- ```skip```
+- ```repeat```
+- ```remove```
+- ```move```
+- ```clear```
+- ```queue```
+- ```nowplaying```
+- ```disconnect```
+
+## Extra:
+- ```load``` - for manually loading a cog
+- ```unload``` - for manually unloading a cog
+- ```reload``` -for manually reloading a cog
