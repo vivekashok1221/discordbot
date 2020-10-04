@@ -9,4 +9,4 @@ daily! If you're wondering  my name is modelled after the character of the same 
 - Create a file name ```.env``` in the root folder and mention your bot token in it.
 - Run the bot with python bot.py.
 
-If you want to add more cogs, add them to /cogs/ and don't forget to load it in bot.py.
+##### If you want to add more cogs, add them to /cogs/ and don't forget to load it in bot.py.
