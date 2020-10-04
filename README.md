@@ -16,3 +16,11 @@ daily! If you're wondering  my name is modelled after the character of the same 
 - [youtube-search>=1.1.0](https://pypi.org/project/youtube-search/)
 
 For installation of libraries and for further information click on the Dependancy Tag which will redirect you to the respective Python Documentation
+
+# Humpty Sharma Features and Commands
+## Admin Commands
+```admin commands:
+mute/unmute
+kick
+shutdown
+purge```
