@@ -8,5 +8,11 @@ daily! If you're wondering  my name is modelled after the character of the same 
 
 - Create a file name ```.env``` in the root folder and mention your bot token in it.
 - Run the bot with python bot.py.
-
-##### If you want to add more cogs, add them to /cogs/ and don't forget to load it in bot.py.
+- If you want to add more cogs, add them to /cogs/ and don't forget to load it in bot.py.
+##### Dependancies Required
+- [discord.py>=1.3.4](https://pypi.org/project/discord.py/)
+- [PyNaCl>=1.4.0](https://pypi.org/project/PyNaCl/)
+- [python-dotenv>=0.14.0](https://pypi.org/project/python-dotenv/)
+- [youtube-dl>=2020.7.28](https://pypi.org/project/youtube_dl/)
+- [youtube-search>=1.1.0](https://pypi.org/project/youtube-search/)
+For installation of libraries and for further information click on the Dependancy Tag which will redirect you to the respective Python Documentation
