@@ -19,11 +19,8 @@ For installation of libraries and for further information click on the Dependanc
 
 # Humpty Sharma Features and Commands
 ## Admin Commands
-```mute/unmute```
-
-```kick```
-
-```shutdown```
-
-```purge```
+- ```mute/unmute```
+- ```kick```
+- ```shutdown```
+- ```purge```
 
