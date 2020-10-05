@@ -36,7 +36,7 @@ class Music(commands.Cog):
         self.voice = None
         self.currentsong = None
         self.repeatsong = False
-
+    # TODO: get voicestate and voicestates
 
     async def cog_command_error(self, ctx, error):
 

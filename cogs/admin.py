@@ -62,8 +62,13 @@ class Admin(commands.Cog):
                             f"{member.mention} has been **kicked** "
                             "<a:cat_vibing:753973817608634468>\n**"
                             f"`reason:` **{reason}")
-        await member.send(embed=embed)
-        await member.kick(reason=reason)
+        
+        try:                    
+            await member.send(embed=embed)
+        except:
+            raise
+        finally:
+            await member.kick(reason=reason)
 
     # TODO: channel specific mute
 
