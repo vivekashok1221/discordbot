@@ -76,7 +76,8 @@ async def reload(ctx, cog_name: str):
     else:
         await ctx.channel.send(f"**Successfully reloaded**: `{cog_name}`")
 
-
-bot.load_extension('cogs.music')
+        
+bot.load_extension('cogs.events')
 bot.load_extension('cogs.admin')
+bot.load_extension('cogs.music')
 bot.run(TOKEN)
