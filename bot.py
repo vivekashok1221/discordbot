@@ -1,5 +1,4 @@
 import os
-import asyncio
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -39,11 +38,6 @@ async def on_command_error(ctx, error):
 
 
 @bot.command()
-async def ping(ctx):
-    await ctx.send(f"`ping:{round(bot.latency,2)}`")
-
-
-@bot.command()
 @commands.is_owner()
 async def load(ctx, cog_name: str):
     try:
@@ -76,7 +70,8 @@ async def reload(ctx, cog_name: str):
     else:
         await ctx.channel.send(f"**Successfully reloaded**: `{cog_name}`")
 
-        
+
+bot.load_extension('cogs.utilities')
 bot.load_extension('cogs.events')
 bot.load_extension('cogs.admin')
 bot.load_extension('cogs.music')
