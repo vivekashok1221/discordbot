@@ -62,10 +62,10 @@ class Admin(commands.Cog):
                             f"{member.mention} has been **kicked** "
                             "<a:cat_vibing:753973817608634468>\n**"
                             f"`reason:` **{reason}")
-        
-        try:                    
+
+        try:
             await member.send(embed=embed)
-        except:
+        except discord.Forbidden:
             raise
         finally:
             await member.kick(reason=reason)
