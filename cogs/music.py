@@ -99,11 +99,18 @@ class Music(commands.Cog):
                                 )
 
 
-    def playsong(self, ctx):
+    def playsong(self, ctx ,radio =False,url =None):
         '''Master play function'''
-
+          
         if self.repeatsong:
             self.repeatsong = False
+        elif radio == True:
+            before_options = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
+            self.voice.play(discord.FFmpegPCMAudio(url,
+                        before_options=before_options),
+                        after=lambda e: self.playsong(ctx)
+                        )
+            return
         elif len(self.playlist) > 0:
             self.currentsong = self.playlist.pop(0)
         else:
@@ -118,7 +125,23 @@ class Music(commands.Cog):
             "\U0001f4c0`Aapko Sunaana Chaahta Hoon:`"
             f"\U0001f4c0\n{self.currentsong.url}"),
                 self.bot.loop)
-
+      
+    @commands.command()
+    @commands.check(active_voice)
+    async def radio(ctx,args):
+        '''
+        stream urls of radio stations in .env file
+        '''
+        
+        radio = {'HiFM':os.getenv('HiFM'),
+            'Merge':os.getenv('Merge'),
+            'Virgin':os.getenv('Virgin') }
+        
+        if args not in radio.keys():
+            await ctx.send('radio station not found')
+        
+        playsong(ctx , radio =True,url =radio[args])
+    
 
     @commands.command()
     @commands.check(active_voice)
