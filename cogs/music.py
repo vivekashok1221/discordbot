@@ -5,6 +5,8 @@ from discord.ext import commands
 import youtube_dl
 from youtube_search import YoutubeSearch
 
+import spotipy   #pip install spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
 
 def active_voice(ctx):
     bot_voice = ctx.guild.voice_client
@@ -118,7 +120,32 @@ class Music(commands.Cog):
             "\U0001f4c0`Aapko Sunaana Chaahta Hoon:`"
             f"\U0001f4c0\n{self.currentsong.url}"),
                 self.bot.loop)
-
+        
+    @commands.command()
+    @commands.check(active_voice)
+    async def spot(self,ctx,link):
+        
+        '''
+        to play spotify links ,
+        make an application on spotify developers portal using your spotify account, 
+        you will receive a spotify_id and spotify_secret 
+        which can be stored in your .env file
+        '''
+        
+        sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=os.getenv('Spotify_id'),client_secret=os.getenv('Spotify_secret'))) 
+        L = link.split('/')
+        if 'https://open.spotify.com/playlist/' in link:
+            tracks = sp.playlist_tracks(L.pop())
+            for I in tracks["items"]:
+                    asyncio.run_coroutine_threadsafe(play(self,ctx,I["track"]["name"]),self.bot.loop)
+        elif 'https://open.spotify.com/track/' in link:
+            track = sp.track(L.pop())
+            asyncio.run_coroutine_threadsafe(play(self,ctx,track['name']),self.bot.loop)
+        elif 'https://open.spotify.com/album/' in link:
+            album_id = L.pop().split('?')[0]
+            album = sp.album(album_id)
+            for track in album['tracks']['items']:
+                     asyncio.run_coroutine_threadsafe(play(self,ctx,track['name']),self.bot.loop)
 
     @commands.command()
     @commands.check(active_voice)
@@ -126,7 +153,7 @@ class Music(commands.Cog):
         if len(args) == 0:
             await self.resume_(ctx)
             return
-
+        
         searchquery = ' '.join(args)
 
         YTresults = YoutubeSearch(searchquery, max_results=1).to_dict()
