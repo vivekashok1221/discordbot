@@ -136,16 +136,16 @@ class Music(commands.Cog):
         L = link.split('/')
         if 'https://open.spotify.com/playlist/' in link:
             tracks = sp.playlist_tracks(L.pop())
-            for I in tracks["items"]:
-                    asyncio.run_coroutine_threadsafe(play(self,ctx,I["track"]["name"]),self.bot.loop)
+            for I in tracks["tracks"]["items"]:
+                    asyncio.run_coroutine_threadsafe(play(self,ctx,f'{I["track"]["name"]} lyrics'),self.bot.loop)
         elif 'https://open.spotify.com/track/' in link:
             track = sp.track(L.pop())
-            asyncio.run_coroutine_threadsafe(play(self,ctx,track['name']),self.bot.loop)
+            asyncio.run_coroutine_threadsafe(play(self,ctx,f'{track['name']} lyrics'),self.bot.loop)
         elif 'https://open.spotify.com/album/' in link:
             album_id = L.pop().split('?')[0]
             album = sp.album(album_id)
             for track in album['tracks']['items']:
-                     asyncio.run_coroutine_threadsafe(play(self,ctx,track['name']),self.bot.loop)
+                     asyncio.run_coroutine_threadsafe(play(self,ctx,f'{track['name']} lyrics'),self.bot.loop)
 
     @commands.command()
     @commands.check(active_voice)
