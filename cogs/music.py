@@ -1,3 +1,4 @@
+import os
 import asyncio
 import discord
 from discord.ext import commands
@@ -99,18 +100,11 @@ class Music(commands.Cog):
                                 )
 
 
-    def playsong(self, ctx ,radio =False,url =None):
+    def playsong(self, ctx):
         '''Master play function'''
-          
+         
         if self.repeatsong:
             self.repeatsong = False
-        elif radio == True:
-            before_options = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
-            self.voice.play(discord.FFmpegPCMAudio(url,
-                        before_options=before_options),
-                        after=lambda e: self.playsong(ctx)
-                        )
-            return
         elif len(self.playlist) > 0:
             self.currentsong = self.playlist.pop(0)
         else:
@@ -128,19 +122,27 @@ class Music(commands.Cog):
       
     @commands.command()
     @commands.check(active_voice)
-    async def radio(ctx,args):
+    async def radio(self, ctx, radio):
         '''
         stream urls of radio stations in .env file
         '''
+        radio = radio.upper()
+        radios = {'HIFM':os.getenv('HiFM'),
+            'MERGE':os.getenv('Merge'),
+            'VIRGIN':os.getenv('Virgin') }
         
-        radio = {'HiFM':os.getenv('HiFM'),
-            'Merge':os.getenv('Merge'),
-            'Virgin':os.getenv('Virgin') }
-        
-        if args not in radio.keys():
+        if radio not in radios.keys():
             await ctx.send('radio station not found')
+            return
         
-        playsong(ctx , radio =True,url =radio[args])
+        self.playlist.append(Song(radio, radios[radio], radio, "LIVE radio", None, ctx.author)) # TODO: beautify
+        print("radio added to queue")
+        
+        if self.voice.is_playing():
+            self.repeatsong = False
+            self.voice.stop()   
+        else:
+            self.playsong(ctx)
     
 
     @commands.command()
@@ -286,8 +288,8 @@ class Music(commands.Cog):
                 embed = discord.Embed(title='Now playing:', colour=discord.Colour.blurple())
                 embed.add_field(name=f'{self.currentsong.title}',
                                 value=f"Requested by: {self.currentsong.requestor}\nDuration: {self.currentsong.duration}")
-
-                embed.set_thumbnail(url=self.currentsong.thumbnail)
+                if self.currentsong.thumbnail:
+                    embed.set_thumbnail(url=self.currentsong.thumbnail)
 
             else:
                 embed = discord.Embed(title='Hmmm...', description='Currently not playing a song', colour=discord.Colour.red())
