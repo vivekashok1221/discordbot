@@ -1,3 +1,4 @@
+import os
 import asyncio
 import discord
 from discord.ext import commands
@@ -101,7 +102,7 @@ class Music(commands.Cog):
 
     def playsong(self, ctx):
         '''Master play function'''
-
+         
         if self.repeatsong:
             self.repeatsong = False
         elif len(self.playlist) > 0:
@@ -118,7 +119,31 @@ class Music(commands.Cog):
             "\U0001f4c0`Aapko Sunaana Chaahta Hoon:`"
             f"\U0001f4c0\n{self.currentsong.url}"),
                 self.bot.loop)
-
+      
+    @commands.command()
+    @commands.check(active_voice)
+    async def radio(self, ctx, radio):
+        '''
+        stream urls of radio stations in .env file
+        '''
+        radio = radio.upper()
+        radios = {'HIFM':os.getenv('HiFM'),
+            'MERGE':os.getenv('Merge'),
+            'VIRGIN':os.getenv('Virgin') }
+        
+        if radio not in radios.keys():
+            await ctx.send('radio station not found')
+            return
+        
+        self.playlist.append(Song(radio, radios[radio], radio, "LIVE radio", None, ctx.author)) # TODO: beautify
+        print("radio added to queue")
+        
+        if self.voice.is_playing():
+            self.repeatsong = False
+            self.voice.stop()   
+        else:
+            self.playsong(ctx)
+    
 
     @commands.command()
     @commands.check(active_voice)
@@ -263,8 +288,8 @@ class Music(commands.Cog):
                 embed = discord.Embed(title='Now playing:', colour=discord.Colour.blurple())
                 embed.add_field(name=f'{self.currentsong.title}',
                                 value=f"Requested by: {self.currentsong.requestor}\nDuration: {self.currentsong.duration}")
-
-                embed.set_thumbnail(url=self.currentsong.thumbnail)
+                if self.currentsong.thumbnail:
+                    embed.set_thumbnail(url=self.currentsong.thumbnail)
 
             else:
                 embed = discord.Embed(title='Hmmm...', description='Currently not playing a song', colour=discord.Colour.red())
