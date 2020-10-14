@@ -29,24 +29,28 @@ For installation of libraries and for further information click on the Dependanc
 
 # Humpty Sharma Features and Commands
 ## Admin Commands:
-- ```mute/unmute```
-- ```kick```
-- ```shutdown```
-- ```purge```
+- ```mute/unmute``` - mutes/unmutes the specified user
+- ```kick``` - kicks the specified user
+- ```shutdown``` - shuts down the bot
+- ```purge``` - deletes the specified number of messages in that particular channel
 
 ## Music Commands:
-- ```join```
-- ```play```
-- ```pause```
-- ```resume```
-- ```skip```
-- ```repeat```
-- ```remove```
-- ```move```
-- ```clear```
-- ```queue```
-- ```nowplaying```
-- ```disconnect```
+- ```join``` - summons the bot to the user's voice channel
+- ```play``` - plays the song from the given name or url
+- ```radio``` - streams one of the radio station: 95.9HiFM, Merge104.8 or 100.9VirginRadio based on user input
+- ```pause``` - pauses the current playing song
+- ```resume``` - resumes the paused song
+- ```skip``` - skips the current playing song
+- ```repeat``` - repeats the current playing song once
+- ```remove``` - removes a particular song from the queue
+- ```move``` - moves a song from a particular position in the queue to the specified position
+- ```clear``` - clears the queue
+- ```queue``` - displays the queue of songs to be played next in order
+- ```nowplaying``` - displays the current playing song
+- ```disconnect``` - disconnects the bot from the voice channel it was connected to
+
+## Utilities:
+- ```bookmark``` - bookmarks a message and sends user the message link in DMs
 
 ## Extra:
 - ```load``` - for manually loading a cog
@@ -55,4 +59,6 @@ For installation of libraries and for further information click on the Dependanc
 
 ## Soon:
 - `search` command for the Music cog
+- `seek` command for the Music cog
+- various commands that give information about the user and the server for the Utilities cog
 - `Games`cog
