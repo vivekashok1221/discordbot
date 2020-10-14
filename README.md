@@ -29,10 +29,10 @@ For installation of libraries and for further information click on the Dependanc
 
 # Humpty Sharma Features and Commands
 ## Admin Commands:
-- ```mute/unmute```
-- ```kick```
-- ```shutdown```
-- ```purge```
+- ```mute/unmute``` - mutes/unmutes the given user
+- ```kick``` - kicks the given user
+- ```shutdown``` - shuts down the bot
+- ```purge``` - deletes the specified number of messages in that particular channel
 
 ## Music Commands:
 - ```join``` - summons to bot to the user's voice channel
@@ -43,7 +43,7 @@ For installation of libraries and for further information click on the Dependanc
 - ```skip``` - skips the current playing song
 - ```repeat``` - repeats the current playing song once
 - ```remove``` - removes a particular song from the queue
-- ```move``` - moves a particular song to first position in the queue
+- ```move``` - moves a song from a particular position in the queue to the specified position
 - ```clear``` - clears the queue
 - ```queue``` - displays the queue of songs to be played next in order
 - ```nowplaying``` - displays the current playing song
