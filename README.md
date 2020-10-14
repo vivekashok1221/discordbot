@@ -51,6 +51,7 @@ For installation of libraries and for further information click on the Dependanc
 
 ## Utilities:
 - ```bookmark``` - bookmarks a message and sends user the message link in DMs
+- ```ping``` - displays the ping or latency
 
 ## Extra:
 - ```load``` - for manually loading a cog

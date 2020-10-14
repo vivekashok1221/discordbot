@@ -132,7 +132,7 @@ class Music(commands.Cog):
             'VIRGIN':os.getenv('Virgin') }
         
         if radio not in radios.keys():
-            await ctx.send('radio station not found')
+            await ctx.send(f"radio station not found.\nAvailable radio stations are {', '.join(radios.keys())}.")
             return
         
         self.playlist.append(Song(radio, radios[radio], radio, "LIVE radio", None, ctx.author)) # TODO: beautify
