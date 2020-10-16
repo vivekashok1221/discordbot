@@ -1,5 +1,5 @@
-import os
 import asyncio
+from constants import RADIOS
 import discord
 from discord.ext import commands
 
@@ -125,20 +125,15 @@ class Music(commands.Cog):
         stream urls of radio stations in .env file
         '''
         radio = radio.upper()
-        radios = {
-            'HIFM': os.getenv('HiFM'),
-            'MERGE': os.getenv('Merge'),
-            'VIRGIN': os.getenv('Virgin')}
-
-        if radio not in radios.keys():
+        if radio not in RADIOS.keys():
             await ctx.send(
                 "radio station not found.\n"
-                f"Available radio stations are {', '.join(radios.keys())}.")
+                f"Available radio stations are {', '.join(RADIOS.keys())}.")
             return
 
         radio_ = Song(
                 url=f"{radio} radio",
-                stream_url=radios[radio],
+                stream_url=RADIOS[radio],
                 title=radio,
                 duration="LIVE radio",
                 thumbnail=None,
