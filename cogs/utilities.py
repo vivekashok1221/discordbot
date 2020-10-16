@@ -13,7 +13,8 @@ class Utilities(commands.Cog):
         await ctx.send(f"`ping:{round(self.bot.latency,2)}`")
 
     @commands.command()
-    async def bookmark(self, ctx, target: discord.Message):
+    async def bookmark(self, ctx, target: discord.Message, *comments):
+        comments = ' '.join(comments) if len(comments) != 0 else None
         embed = discord.Embed(
             title="DID SOMEONE TYPE  !bookmark ???",
             color=discord.Colour.gold())
@@ -24,7 +25,12 @@ class Utilities(commands.Cog):
         try:
             user_embed = embed.copy()
             user_embed.description = target.content
+            if comments:
+                embed.add_field(
+                    name="comments:",
+                    value=comments)
             await ctx.author.send(embed=user_embed)
+
         except discord.Forbidden:
             user_embed.set_colour = discord.Colour.red()
             embed.set_footer(
