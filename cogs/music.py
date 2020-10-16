@@ -106,8 +106,8 @@ class Music(commands.Cog):
             return  # no songs in queue and repeat is off
 
         before_options = (
-            "-reconnect 1"
-            "-reconnect_streamed 1"
+            "-reconnect 1 "
+            "-reconnect_streamed 1 "
             "-reconnect_delay_max 5")
         self.voice.play(discord.FFmpegPCMAudio(self.currentsong.stream_url,
                         before_options=before_options),
@@ -299,7 +299,7 @@ class Music(commands.Cog):
                 embed.add_field(
                     name=f'{self.currentsong.title}',
                     value=f"Requested by: {self.currentsong.requestor}"
-                    "\nDuration: {self.currentsong.duration}")
+                    f"\nDuration: {self.currentsong.duration}")
                 if self.currentsong.thumbnail:
                     embed.set_thumbnail(url=self.currentsong.thumbnail)
 
