@@ -136,13 +136,14 @@ class Music(commands.Cog):
                 f"Available radio stations are {', '.join(radios.keys())}.")
             return
 
-        self.currentsong = Song(
-            url=f"{radio} radio",
-            stream_url=radios[radio],
-            title=radio,
-            duration="LIVE radio",
-            thumbnail=None,
-            requestor=ctx.author)
+        self.playlist.append(
+            Song(
+                url=f"{radio} radio",
+                stream_url=radios[radio],
+                title=radio,
+                duration="LIVE radio",
+                thumbnail=None,
+                requestor=ctx.author))
 
         if self.voice.is_playing():
             self.repeatsong = False
@@ -182,9 +183,10 @@ class Music(commands.Cog):
             self.playlist.append(songObj)
             return
         else:
-            self.currentsong = Song(
+            songObj = Song(
                 url_, stream_url, title,
                 duration, thumbnail, ctx.message.author)
+            self.playlist.append(songObj)
             self.playsong(ctx)
 
     @commands.command(name='pause', aliases=['rokku'])
