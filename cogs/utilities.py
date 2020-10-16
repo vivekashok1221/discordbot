@@ -23,7 +23,7 @@ class Utilities(commands.Cog):
             name="Well, here ya go:",
             value=f"link to [message]({target.jump_url})")
         try:
-            user_embed = embed
+            user_embed = embed.copy()
             user_embed.description = target.content
             if comments:
                 user_embed.add_field(
@@ -46,4 +46,4 @@ class Utilities(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Utilities(bot))
-    print("Added untilites cog")
+    print("Added utilites cog")
