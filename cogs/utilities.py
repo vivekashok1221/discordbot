@@ -23,16 +23,16 @@ class Utilities(commands.Cog):
             name="Well, here ya go:",
             value=f"link to [message]({target.jump_url})")
         try:
-            user_embed = embed.copy()
+            user_embed = embed
             user_embed.description = target.content
             if comments:
-                embed.add_field(
+                user_embed.add_field(
                     name="comments:",
-                    value=comments)
+                    value=comments, inline=False)
             await ctx.author.send(embed=user_embed)
 
         except discord.Forbidden:
-            user_embed.set_colour = discord.Colour.red()
+            embed.set_colour = discord.Colour.red()
             embed.set_footer(
                 text="Can't send bookmark to user "
                 "as DMs are disabled.")
