@@ -25,8 +25,8 @@ class Song:
         self.stream_url = stream_url
         self.title = title
         self.duration = duration
-        self.requestor = requestor
         self.thumbnail = thumbnail
+        self.requestor = requestor
 
 
 # TODO: Custom help command
@@ -61,9 +61,7 @@ class Music(commands.Cog):
             elif author_voice.deaf:
                 await ctx.channel.send(
                     f"{ctx.author.mention}**`Server deafen "
-                    "go Brrrrrrrrrr...`**"
-                                    )
-
+                    "go Brrrrrrrrrr...`**")
 
     @commands.command()
     async def poem(self, ctx):  # TODO: add poems
@@ -75,14 +73,12 @@ class Music(commands.Cog):
         then jail bail, jail bail, jail bail ...
         and one day your heart fail''')
 
-
     @commands.command(aliases=['j', 'aaja'])
     async def join(self, ctx):
         self.playlist = []
         # playlist = asyncio.Queue()
         author_voice = ctx.message.author.voice
         self.voice = ctx.message.guild.voice_client
-
 
         if self.voice is None:
             if author_voice:
@@ -99,10 +95,9 @@ class Music(commands.Cog):
                 '**Arree BC, I\'m already connected to a VC**'
                                 )
 
-
     def playsong(self, ctx):
         '''Master play function'''
-         
+
         if self.repeatsong:
             self.repeatsong = False
         elif len(self.playlist) > 0:
@@ -110,7 +105,10 @@ class Music(commands.Cog):
         else:
             return  # no songs in queue and repeat is off
 
-        before_options = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
+        before_options = (
+            "-reconnect 1"
+            "-reconnect_streamed 1"
+            "-reconnect_delay_max 5")
         self.voice.play(discord.FFmpegPCMAudio(self.currentsong.stream_url,
                         before_options=before_options),
                         after=lambda e: self.playsong(ctx)
@@ -119,7 +117,7 @@ class Music(commands.Cog):
             "\U0001f4c0`Aapko Sunaana Chaahta Hoon:`"
             f"\U0001f4c0\n{self.currentsong.url}"),
                 self.bot.loop)
-      
+
     @commands.command()
     @commands.check(active_voice)
     async def radio(self, ctx, radio):
@@ -127,23 +125,30 @@ class Music(commands.Cog):
         stream urls of radio stations in .env file
         '''
         radio = radio.upper()
-        radios = {'HIFM':os.getenv('HiFM'),
-            'MERGE':os.getenv('Merge'),
-            'VIRGIN':os.getenv('Virgin') }
-        
+        radios = {
+            'HIFM': os.getenv('HiFM'),
+            'MERGE': os.getenv('Merge'),
+            'VIRGIN': os.getenv('Virgin')}
+
         if radio not in radios.keys():
-            await ctx.send(f"radio station not found.\nAvailable radio stations are {', '.join(radios.keys())}.")
+            await ctx.send(
+                "radio station not found.\n"
+                f"Available radio stations are {', '.join(radios.keys())}.")
             return
-        
-        self.playlist.append(Song(radio, radios[radio], radio, "LIVE radio", None, ctx.author)) # TODO: beautify
-        print("radio added to queue")
-        
+
+        self.currentsong = Song(
+            url=f"{radio} radio",
+            stream_url=radios[radio],
+            title=radio,
+            duration="LIVE radio",
+            thumbnail=None,
+            requestor=ctx.author)
+
         if self.voice.is_playing():
             self.repeatsong = False
-            self.voice.stop()   
+            self.voice.stop()
         else:
             self.playsong(ctx)
-    
 
     @commands.command()
     @commands.check(active_voice)
@@ -167,18 +172,20 @@ class Music(commands.Cog):
                 result = ydl.extract_info(url_, download=False)
                 stream_url = result['formats'][0]['url']
         except Exception as e:
-            await ctx.channel.send(f'**`{type(e).__name__} : {e}`** \U0001f62c')
+            await ctx.channel.send(f'**`{type(e).__name__} : {e}`**\U0001f62c')
 
         if self.voice.is_playing():
             await ctx.channel.send(f'`{title}` has been added to queue')
-            songObj = Song(url_, stream_url, title, duration, thumbnail, ctx.message.author)
+            songObj = Song(
+                url_, stream_url, title,
+                duration, thumbnail, ctx.message.author)
             self.playlist.append(songObj)
             return
         else:
-            songObj = Song(url_, stream_url, title, duration, thumbnail, ctx.message.author)  # repeating is faster
-            self.playlist.append(songObj)
+            self.currentsong = Song(
+                url_, stream_url, title,
+                duration, thumbnail, ctx.message.author)
             self.playsong(ctx)
-
 
     @commands.command(name='pause', aliases=['rokku'])
     @commands.check(active_voice)
@@ -186,8 +193,9 @@ class Music(commands.Cog):
         '''Pauses the current playing song'''
         if self.voice:
             self.voice.pause()
-            await ctx.channel.send("*Me karu intezer tera...* `Song has been paused` \u23f8")
-
+            await ctx.channel.send(
+                "*Me karu intezer tera...*"
+                "`Song has been paused` \u23f8")
 
     @commands.command(name='resume')
     @commands.check(active_voice)
@@ -196,7 +204,6 @@ class Music(commands.Cog):
         if self.voice and self.voice.is_paused():
             await ctx.channel.send("*RESUMING bhai...*\u23ef")
             self.voice.resume()
-
 
     @commands.command(aliases=['s', 'hutt'])
     @commands.check(active_voice)
@@ -208,7 +215,6 @@ class Music(commands.Cog):
                 await ctx.channel.send("No songs to skip\U0001f926")
             self.voice.stop()
             self.repeatsong = False
-
 
     @commands.command()
     @commands.check(active_voice)
@@ -222,7 +228,6 @@ class Music(commands.Cog):
                 self.repeatsong = False
                 await ctx.channel.send("**`Repeat: Cancelled`**\U0001f645")
 
-
     @commands.command(aliases=['r'])
     @commands.check(active_voice)
     async def remove(self, ctx, position: int):
@@ -232,9 +237,8 @@ class Music(commands.Cog):
                 s = self.playlist.pop(position)
             else:
                 s = self.playlist.pop(position-1)
-            await ctx.channel.send(f"**removed `{s.title}` from the queue**")  # TODO: emoji
+            await ctx.channel.send(f"**removed `{s.title}` from the queue**")
             del s
-
 
     @commands.command(aliases=['m'])
     async def move(self, ctx, initial: int, final: int = 1):
@@ -245,9 +249,10 @@ class Music(commands.Cog):
                 return
             s = self.playlist.pop(initial-1)
             self.playlist.insert(final-1, s)
-            await ctx.channel.send(f"**`{s.title}` moved to position {final}** \u2705")
+            await ctx.channel.send(
+                f"**`{s.title}` moved to "
+                "position {final}** \u2705")
             del s
-
 
     @commands.command(name='clear')
     @commands.check(active_voice)
@@ -255,7 +260,6 @@ class Music(commands.Cog):
         if self.voice:
             self.playlist.clear()
             await ctx.channel.send("`Queue has been cleared`\u2705")
-
 
     @commands.command(name='queue', aliases=['q', 'gaanas'])
     async def listqueue(self, ctx):
@@ -275,29 +279,37 @@ class Music(commands.Cog):
                         inline=False)
 
             else:
-                embed = discord.Embed(title='Abbe...', description="Queue is empty", colour=discord.Colour.red())
+                embed = discord.Embed(
+                    title='Abbe...',
+                    description="Queue is empty",
+                    colour=discord.Colour.red())
 
             await ctx.channel.send(embed=embed)
-
 
     @commands.command(aliases=['np'])
     async def nowplaying(self, ctx):  # TODO: Duration left
 
         if self.voice:
             if self.voice.is_playing() or self.voice.is_paused():
-                embed = discord.Embed(title='Now playing:', colour=discord.Colour.blurple())
-                embed.add_field(name=f'{self.currentsong.title}',
-                                value=f"Requested by: {self.currentsong.requestor}\nDuration: {self.currentsong.duration}")
+                embed = discord.Embed(
+                    title='Now playing:',
+                    colour=discord.Colour.blurple())
+                embed.add_field(
+                    name=f'{self.currentsong.title}',
+                    value=f"Requested by: {self.currentsong.requestor}"
+                    "\nDuration: {self.currentsong.duration}")
                 if self.currentsong.thumbnail:
                     embed.set_thumbnail(url=self.currentsong.thumbnail)
 
             else:
-                embed = discord.Embed(title='Hmmm...', description='Currently not playing a song', colour=discord.Colour.red())
+                embed = discord.Embed(
+                    title='Hmmm...',
+                    description='Currently not playing a song',
+                    colour=discord.Colour.red())
 
             await ctx.channel.send(embed=embed)
 
-
-    @commands.command(help=f"Disconnects from Voice Channel", aliases=['dis'])
+    @commands.command(help="Disconnects from Voice Channel", aliases=['dis'])
     @commands.check(active_voice)
     async def disconnect(self, ctx):
         if self.voice:
