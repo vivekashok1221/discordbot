@@ -35,32 +35,9 @@ class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.voice_states = dict()
+        self.playlists = dict()
         self.currentsong = None
         self.repeatsong = False
-
-    async def cog_command_error(self, ctx, error):
-
-        if isinstance(error, commands.CheckFailure):
-
-            bot_voice = ctx.message.guild.voice_client
-            author_voice = ctx.message.author.voice
-
-            if bot_voice is None or author_voice is None\
-                    or bot_voice.channel != author_voice.channel:
-                await ctx.channel.send(
-                                    "**`Please connect to the same VC as "
-                                    f"`{self.bot.user.mention}`to use this "
-                                    "command`\U0001f926\u200d\u2642\ufe0f**"
-                                        )
-            elif author_voice.self_deaf:
-                await ctx.channel.send(
-                                    "**`Nuh uh, can't use this command "
-                                    "while deafened.`**")
-
-            elif author_voice.deaf:
-                await ctx.channel.send(
-                    f"{ctx.author.mention}**`Server deafen "
-                    "go Brrrrrrrrrr...`**")
 
     @commands.command()
     async def poem(self, ctx):  # TODO: add poems
@@ -85,7 +62,7 @@ class Music(commands.Cog):
                     '**Meh raazi! Tu raazi! `Connected to your VC`**')
                 voice_state = ctx.message.guild.voice_client
                 self.voice_states[ctx.guild.id] = voice_state
-                self.playlist = []
+                self.playlists[ctx.guild.id] = []
             else:
                 await ctx.channel.send(
                                 "**Meh raazi, lekin Tu nahi raazi. "
@@ -98,10 +75,11 @@ class Music(commands.Cog):
     def playsong(self, ctx):
         '''Master play function'''
 
+        playlist = self.playlists[ctx.guild.id]
         if self.repeatsong:
             self.repeatsong = False
-        elif len(self.playlist) > 0:
-            self.currentsong = self.playlist.pop(0)
+        elif len(playlist) > 0:
+            self.currentsong = playlist.pop(0)
         else:
             return  # no songs in queue and repeat is off
 
@@ -141,8 +119,8 @@ class Music(commands.Cog):
                 duration="LIVE radio",
                 thumbnail=None,
                 requestor=ctx.author)
-
-        self.playlist.insert(0, radio_)
+        playlist = self.playlists[ctx.guild.id]
+        playlist.insert(0, radio_)
 
         voice_state = self.voice_states[ctx.guild.id]
         if voice_state.is_playing():
@@ -176,18 +154,19 @@ class Music(commands.Cog):
             await ctx.channel.send(f'**`{type(e).__name__} : {e}`**\U0001f62c')
 
         voice_state = self.voice_states[ctx.guild.id]
+        playlist = self.playlists[ctx.guild.id]
         if voice_state.is_playing():
             await ctx.channel.send(f'`{title}` has been added to queue')
             songObj = Song(
                 url_, stream_url, title,
                 duration, thumbnail, ctx.message.author)
-            self.playlist.append(songObj)
+            playlist.append(songObj)
             return
         else:
             songObj = Song(
                 url_, stream_url, title,
                 duration, thumbnail, ctx.message.author)
-            self.playlist.append(songObj)
+            playlist.append(songObj)
             self.playsong(ctx)
 
     @commands.command(name='pause', aliases=['rokku'])
@@ -240,11 +219,12 @@ class Music(commands.Cog):
     async def remove(self, ctx, position: int):
         '''Removes song at position from queue'''
         voice_state = self.voice_states[ctx.guild.id]
-        if voice_state and self.playlist:
+        playlist = self.playlists.get(ctx.guild.id, None)
+        if voice_state and playlist:
             if position < 0:
-                s = self.playlist.pop(position)
+                s = playlist.pop(position)
             else:
-                s = self.playlist.pop(position-1)
+                s = playlist.pop(position-1)
             await ctx.channel.send(f"**removed `{s.title}` from the queue**")
             del s
 
@@ -252,12 +232,13 @@ class Music(commands.Cog):
     async def move(self, ctx, initial: int, final: int = 1):
         '''Moves song from the specified intial position to final position'''
         voice_state = self.voice_states[ctx.guild.id]
-        if voice_state and self.playlist:
+        playlist = self.playlists.get(ctx.guild.id, None)
+        if voice_state and playlist:
             if initial < 1 or final < 1:
                 await ctx.channel.send("`Invalid Arguments, naughty boy`")
                 return
-            s = self.playlist.pop(initial-1)
-            self.playlist.insert(final-1, s)
+            s = playlist.pop(initial-1)
+            playlist.insert(final-1, s)
             await ctx.channel.send(
                 f"**`{s.title}` moved to "
                 "position {final}** \u2705")
@@ -268,7 +249,7 @@ class Music(commands.Cog):
     async def clear_(self, ctx):
         voice_state = self.voice_states[ctx.guild.id]
         if voice_state:
-            self.playlist.clear()
+            self.playlists[ctx.guild.id].clear()
             await ctx.channel.send("`Queue has been cleared`\u2705")
 
     @commands.command(name='queue', aliases=['q', 'gaanas'])
@@ -276,13 +257,14 @@ class Music(commands.Cog):
         '''List the songs in queue'''
 
         voice_state = self.voice_states[ctx.guild.id]
+        playlist = self.playlists.get(ctx.guild.id, None)
         if voice_state:
-            if self.playlist:
+            if playlist:
                 embed = discord.Embed(
                     title='Yeh hei tera queue:',
                     colour=discord.Colour.gold())
                 embed.description = f'Now Playing: {self.currentsong.title}'
-                for song in self.playlist:
+                for song in playlist:
                     embed.add_field(
                         name=song.title,
                         value=f"Requested by: {song.requestor}\n"
@@ -327,7 +309,30 @@ class Music(commands.Cog):
         if voice_state:
             await voice_state.disconnect()
             await ctx.channel.send("`Disconnected from VC`")
-            del self.playlist
+            del self.playlists.get[ctx.guild.id]
+
+    async def cog_command_error(self, ctx, error):
+
+        if isinstance(error, commands.CheckFailure):
+            bot_voice = ctx.message.guild.voice_client
+            author_voice = ctx.message.author.voice
+
+            if bot_voice is None or author_voice is None\
+                    or bot_voice.channel != author_voice.channel:
+                await ctx.channel.send(
+                                    "**`Please connect to the same VC as "
+                                    f"`{self.bot.user.mention}`to use this "
+                                    "command`\U0001f926\u200d\u2642\ufe0f**"
+                                        )
+            elif author_voice.self_deaf:
+                await ctx.channel.send(
+                                    "**`Nuh uh, can't use this command "
+                                    "while deafened.`**")
+
+            elif author_voice.deaf:
+                await ctx.channel.send(
+                    f"{ctx.author.mention}**`Server deafen "
+                    "go Brrrrrrrrrr...`**")
 
 
 def setup(bot):
