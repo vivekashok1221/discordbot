@@ -36,7 +36,7 @@ class Music(commands.Cog):
         self.bot = bot
         self.voice_states = dict()
         self.playlists = dict()
-        self.currentsong = None
+        self.currentsongs = dict()
         self.repeatsong = False
 
     @commands.command()
@@ -55,7 +55,7 @@ class Music(commands.Cog):
         author_voice = ctx.message.author.voice
         voice_state = self.voice_states.get(ctx.guild, None)
 
-        if voice_state is None:
+        if not voice_state:
             if author_voice:
                 await ctx.message.author.voice.channel.connect()
                 await ctx.channel.send(
@@ -79,24 +79,24 @@ class Music(commands.Cog):
         if self.repeatsong:
             self.repeatsong = False
         elif len(playlist) > 0:
-            self.currentsong = playlist.pop(0)
+            self.currentsongs[ctx.guild.id] = playlist.pop(0)
         else:
             return  # no songs in queue and repeat is off
 
-        voice_state = self.voice_states[ctx.guild.id]
+        voice_state = self.voice_states.get(ctx.guild.id, None)
         before_options = (
             "-reconnect 1 "
             "-reconnect_streamed 1 "
             "-reconnect_delay_max 5")
         voice_state.play(
             discord.FFmpegPCMAudio(
-                self.currentsong.stream_url,
+                self.currentsongs[ctx.guild.id].stream_url,
                 before_options=before_options),
             after=lambda e: self.playsong(ctx)
                         )
         asyncio.run_coroutine_threadsafe(ctx.channel.send(
             "\U0001f4c0`Aapko Sunaana Chaahta Hoon:`"
-            f"\U0001f4c0\n{self.currentsong.url}"),
+            f"\U0001f4c0\n{self.currentsongs[ctx.guild.id].url}"),
                 self.bot.loop)
 
     @commands.command()
@@ -173,7 +173,7 @@ class Music(commands.Cog):
     @commands.check(active_voice)
     async def pause_(self, ctx):
         '''Pauses the current playing song'''
-        voice_state = self.voice_states[ctx.guild.id]
+        voice_state = self.voice_states.get(ctx.guild.id, None)
         if voice_state:
             voice_state.pause()
             await ctx.channel.send(
@@ -184,7 +184,7 @@ class Music(commands.Cog):
     @commands.check(active_voice)
     async def resume_(self, ctx):
         '''Resumes the paused song'''
-        voice_state = self.voice_states[ctx.guild.id]
+        voice_state = self.voice_states.get(ctx.guild.id, None)
         if voice_state and voice_state.is_paused():
             await ctx.channel.send("*RESUMING bhai...*\u23ef")
             voice_state.resume()
@@ -192,7 +192,7 @@ class Music(commands.Cog):
     @commands.command(aliases=['s', 'hutt'])
     @commands.check(active_voice)
     async def skip(self, ctx):  # TODO: vote
-        voice_state = self.voice_states[ctx.guild.id]
+        voice_state = self.voice_states.get(ctx.guild.id, None)
         if voice_state:
             if voice_state.is_playing():
                 await ctx.channel.send("**`song skipped`** \U0001fa93")
@@ -205,7 +205,7 @@ class Music(commands.Cog):
     @commands.check(active_voice)
     async def repeat(self, ctx):
         '''Repeats the current playing song ONCE'''
-        voice_state = self.voice_states[ctx.guild.id]
+        voice_state = self.voice_states.get(ctx.guild.id, None)
         if voice_state:
             if not self.repeatsong:
                 self.repeatsong = True
@@ -218,7 +218,7 @@ class Music(commands.Cog):
     @commands.check(active_voice)
     async def remove(self, ctx, position: int):
         '''Removes song at position from queue'''
-        voice_state = self.voice_states[ctx.guild.id]
+        voice_state = self.voice_states.get(ctx.guild.id, None)
         playlist = self.playlists.get(ctx.guild.id, None)
         if voice_state and playlist:
             if position < 0:
@@ -231,7 +231,7 @@ class Music(commands.Cog):
     @commands.command(aliases=['m'])
     async def move(self, ctx, initial: int, final: int = 1):
         '''Moves song from the specified intial position to final position'''
-        voice_state = self.voice_states[ctx.guild.id]
+        voice_state = self.voice_states.get(ctx.guild.id, None)
         playlist = self.playlists.get(ctx.guild.id, None)
         if voice_state and playlist:
             if initial < 1 or final < 1:
@@ -247,7 +247,7 @@ class Music(commands.Cog):
     @commands.command(name='clear')
     @commands.check(active_voice)
     async def clear_(self, ctx):
-        voice_state = self.voice_states[ctx.guild.id]
+        voice_state = self.voice_states.get(ctx.guild.id, None)
         if voice_state:
             self.playlists[ctx.guild.id].clear()
             await ctx.channel.send("`Queue has been cleared`\u2705")
@@ -256,14 +256,15 @@ class Music(commands.Cog):
     async def listqueue(self, ctx):
         '''List the songs in queue'''
 
-        voice_state = self.voice_states[ctx.guild.id]
+        voice_state = self.voice_states.get(ctx.guild.id, None)
         playlist = self.playlists.get(ctx.guild.id, None)
         if voice_state:
             if playlist:
                 embed = discord.Embed(
                     title='Yeh hei tera queue:',
                     colour=discord.Colour.gold())
-                embed.description = f'Now Playing: {self.currentsong.title}'
+                embed.description = "Now Playing:"
+                f"{self.currentsongs[ctx.guild.id].title}"
                 for song in playlist:
                     embed.add_field(
                         name=song.title,
@@ -281,18 +282,19 @@ class Music(commands.Cog):
 
     @commands.command(aliases=['np'])
     async def nowplaying(self, ctx):  # TODO: Duration left
-        voice_state = self.voice_states[ctx.guild.id]
+        voice_state = self.voice_states.get(ctx.guild.id, None)
+        currentsong = self.currentsongs.get(ctx.guild.id, None)
         if voice_state:
             if voice_state.is_playing() or voice_state.is_paused():
                 embed = discord.Embed(
                     title='Now playing:',
                     colour=discord.Colour.blurple())
                 embed.add_field(
-                    name=f'{self.currentsong.title}',
-                    value=f"Requested by: {self.currentsong.requestor}"
-                    f"\nDuration: {self.currentsong.duration}")
-                if self.currentsong.thumbnail:
-                    embed.set_thumbnail(url=self.currentsong.thumbnail)
+                    name=f'{currentsong.title}',
+                    value=f"Requested by: {currentsong.requestor}"
+                    f"\nDuration: {currentsong.duration}")
+                if currentsong.thumbnail:
+                    embed.set_thumbnail(url=currentsong.thumbnail)
 
             else:
                 embed = discord.Embed(
@@ -305,11 +307,13 @@ class Music(commands.Cog):
     @commands.command(help="Disconnects from Voice Channel", aliases=['dis'])
     @commands.check(active_voice)
     async def disconnect(self, ctx):
-        voice_state = self.voice_states[ctx.guild.id]
+        voice_state = self.voice_states.get(ctx.guild.id, None)
         if voice_state:
             await voice_state.disconnect()
             await ctx.channel.send("`Disconnected from VC`")
-            del self.playlists.get[ctx.guild.id]
+            playlist = self.playlists.get(ctx.guild.id, None)
+            if playlist:
+                del playlist
 
     async def cog_command_error(self, ctx, error):
 
