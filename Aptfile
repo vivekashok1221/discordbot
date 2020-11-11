@@ -1,9 +1,1 @@
-ffmpeg
-build-essential -y
-unzip -y
-software-properties-common -y
-libopus-dev -y
-libffi-dev -y
-libsodium-dev -y
-opus-tools -y
-libvpx5 -y
+
